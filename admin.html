@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - My Personal Blog</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header class="header">
+        <nav class="nav">
+            <div class="logo">
+                <h1>My Blog</h1>
+            </div>
+            <ul class="nav-links">
+                <li><a href="index.html">Home</a></li>
+                <li><a href="about.html">About</a></li>
+                <li><a href="contact.html">Contact</a></li>
+                <li><a href="admin.html">Admin</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main class="main">
+        <!-- Login Section -->
+        <section id="loginSection" class="form-container">
+            <h2>Admin Login</h2>
+            <form id="adminLogin">
+                <div class="form-group">
+                    <label for="adminUsername">Username:</label>
+                    <input type="text" id="adminUsername" name="username" required>
+                </div>
+                <div class="form-group">
+                    <label for="adminPassword">Password:</label>
+                    <input type="password" id="adminPassword" name="password" required>
+                </div>
+                <button type="submit" class="btn">Login</button>
+            </form>
+            <div id="loginError" class="alert alert-error hidden"></div>
+        </section>
+
+        <!-- Admin Panel -->
+        <section id="adminPanel" class="hidden">
+            <div class="admin-section">
+                <h2>Admin Panel</h2>
+                <button id="logoutBtn" class="btn btn-danger">Logout</button>
+                
+                <h3>Add New Post</h3>
+                <form id="addPostForm">
+                    <div class="form-group">
+                        <label for="postTitle">Title:</label>
+                        <input type="text" id="postTitle" name="title" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="postContent">Content:</label>
+                        <textarea id="postContent" name="content" required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="postAuthor">Author:</label>
+                        <input type="text" id="postAuthor" name="author" required>
+                    </div>
+                    <button type="submit" class="btn">Add Post</button>
+                </form>
+                
+                <div id="postAlert" class="alert hidden"></div>
+            </div>
+            
+            <div class="admin-section">
+                <h3>Manage Posts</h3>
+                <div id="adminPosts" class="admin-posts">
+                    <!-- Posts will be loaded here -->
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <p>&copy; 2025 My Personal Blog. All rights reserved.</p>
+    </footer>
+    
+    <script>
+        let posts = JSON.parse(localStorage.getItem('blogPosts')) || [
+            {
+                id: 1,
+                title: "First Blog Post",
+                content: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
+                author: "Author 1",
+                date: "2025-07-12"
+            },
+            {
+                id: 2,
+                title: "Second Blog Post",
+                content: "Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.",
+                author: "Author 2",
+                date: "2025-07-11"
+            }
+        ];
+        
+        // Admin login
+        document.getElementById('adminLogin').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const username = document.getElementById('adminUsername').value;
+            const password = document.getElementById('adminPassword').value;
+            const loginError = document.getElementById('loginError');
+            
+            if (username === 'admin' && password === 'admin') {
+                document.getElementById('loginSection').classList.add('hidden');
+                document.getElementById('adminPanel').classList.remove('hidden');
+                loadAdminPosts();
+            } else {
+                loginError.textContent = 'Invalid username or password. Try: admin/admin';
+                loginError.classList.remove('hidden');
+            }
+        });
+        
+        // Logout
+        document.getElementById('logoutBtn').addEventListener('click', function() {
+            document.getElementById('loginSection').classList.remove('hidden');
+            document.getElementById('adminPanel').classList.add('hidden');
+            document.getElementById('adminLogin').reset();
+            document.getElementById('loginError').classList.add('hidden');
+        });
+        
+        // Add new post
+        document.getElementById('addPostForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const title = document.getElementById('postTitle').value;
+            const content = document.getElementById('postContent').value;
+            const author = document.getElementById('postAuthor').value;
+            
+            const newPost = {
+                id: Date.now(),
+                title: title,
+                content: content,
+                author: author,
+                date: new Date().toISOString().split('T')[0]
+            };
+            
+            posts.unshift(newPost);
+            localStorage.setItem('blogPosts', JSON.stringify(posts));
+            
+            const alert = document.getElementById('postAlert');
+            alert.className = 'alert alert-success';
+            alert.textContent = 'Post added successfully!';
+            alert.classList.remove('hidden');
+            
+            document.getElementById('addPostForm').reset();
+            loadAdminPosts();
+            
+            setTimeout(() => {
+                alert.classList.add('hidden');
+            }, 3000);
+        });
+        
+        // Load admin posts
+        function loadAdminPosts() {
+            const adminPostsContainer = document.getElementById('adminPosts');
+            adminPostsContainer.innerHTML = '';
+            
+            posts.forEach(post => {
+                const postDiv = document.createElement('div');
+                postDiv.className = 'admin-post';
+                postDiv.innerHTML = `
+                    <h4>${post.title}</h4>
+                    <p>${post.content.substring(0, 100)}...</p>
+                    <small>By ${post.author} on ${post.date}</small>
+                    <div class="admin-actions">
+                        <button class="btn btn-danger" onclick="deletePost(${post.id})">Delete</button>
+                    </div>
+                `;
+                adminPostsContainer.appendChild(postDiv);
+            });
+        }
+        
+        // Delete post
+        function deletePost(id) {
+            posts = posts.filter(post => post.id !== id);
+            localStorage.setItem('blogPosts', JSON.stringify(posts));
+            loadAdminPosts();
+        }
+        
+        // Load posts on page load
+        window.addEventListener('load', function() {
+            if (posts.length > 0) {
+                localStorage.setItem('blogPosts', JSON.stringify(posts));
+            }
+        });
+    </script>
+</body>
+</html>
+
