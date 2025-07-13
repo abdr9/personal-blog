@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Submit Your Blog - ABD BLOGS</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header class="header">
+        <nav class="nav">
+            <div class="logo">
+                <h1>ABD BLOGS</h1>
+            </div>
+            <ul class="nav-links">
+                <li><a href="index.html">Home</a></li>
+                <li><a href="about.html">About</a></li>
+                <li><a href="contact.html">Contact</a></li>
+                <li><a href="submit-blog.html">Submit Blog</a></li>
+                <li><a href="messages.html">Messages</a></li>
+                <li><a href="admin.html">Admin</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main class="main">
+        <section class="form-container">
+            <h2>Submit Your Blog Post</h2>
+            <p>Share your thoughts, experiences, and knowledge with the ABD BLOGS community!</p>
+            
+            <form id="blogSubmissionForm">
+                <div class="form-group">
+                    <label for="authorName">Your Name:</label>
+                    <input type="text" id="authorName" name="authorName" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="authorEmail">Your Email:</label>
+                    <input type="email" id="authorEmail" name="authorEmail" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="blogTitle">Blog Title:</label>
+                    <input type="text" id="blogTitle" name="blogTitle" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="blogCategory">Category:</label>
+                    <select id="blogCategory" name="blogCategory" required>
+                        <option value="">Select a category</option>
+                        <option value="Technology">Technology</option>
+                        <option value="Lifestyle">Lifestyle</option>
+                        <option value="Education">Education</option>
+                        <option value="Travel">Travel</option>
+                        <option value="Food">Food</option>
+                        <option value="Health">Health</option>
+                        <option value="Business">Business</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="blogContent">Blog Content:</label>
+                    <textarea id="blogContent" name="blogContent" rows="15" required placeholder="Write your blog post here..."></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="blogTags">Tags (comma-separated):</label>
+                    <input type="text" id="blogTags" name="blogTags" placeholder="e.g., javascript, tutorial, web development">
+                </div>
+                
+                <div class="form-group">
+                    <button type="button" id="aiAssistBtn" class="btn" style="background-color: #e74c3c; margin-bottom: 10px;">
+                        🤖 Get AI Writing Assistance
+                    </button>
+                </div>
+                
+                <button type="submit" class="btn">Submit Blog Post</button>
+            </form>
+            
+            <div id="submissionAlert" class="alert hidden"></div>
+        </section>
+
+        <!-- AI Assistant Modal -->
+        <div id="aiModal" class="modal hidden">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <h3>AI Writing Assistant</h3>
+                <div class="form-group">
+                    <label for="aiPrompt">What would you like help with?</label>
+                    <textarea id="aiPrompt" placeholder="e.g., Help me write an introduction about web development..."></textarea>
+                </div>
+                <button id="generateAI" class="btn">Generate Content</button>
+                <div id="aiResult" class="ai-result hidden"></div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <p>&copy; 2025 ABD BLOGS. All rights reserved.</p>
+    </footer>
+    
+    <script>
+        // Blog submission form
+        document.getElementById('blogSubmissionForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const authorName = document.getElementById('authorName').value;
+            const authorEmail = document.getElementById('authorEmail').value;
+            const blogTitle = document.getElementById('blogTitle').value;
+            const blogCategory = document.getElementById('blogCategory').value;
+            const blogContent = document.getElementById('blogContent').value;
+            const blogTags = document.getElementById('blogTags').value;
+            
+            const submittedPost = {
+                id: Date.now(),
+                title: blogTitle,
+                content: blogContent,
+                author: authorName,
+                email: authorEmail,
+                category: blogCategory,
+                tags: blogTags.split(',').map(tag => tag.trim()).filter(tag => tag),
+                date: new Date().toISOString().split('T')[0],
+                status: 'pending',
+                type: 'user-submitted'
+            };
+            
+            // Get existing submissions
+            const submissions = JSON.parse(localStorage.getItem('blogSubmissions')) || [];
+            submissions.unshift(submittedPost);
+            localStorage.setItem('blogSubmissions', JSON.stringify(submissions));
+            
+            const alert = document.getElementById('submissionAlert');
+            alert.className = 'alert alert-success';
+            alert.textContent = 'Thank you for your submission! Your blog post is under review and will be published soon.';
+            alert.classList.remove('hidden');
+            
+            // Reset form
+            document.getElementById('blogSubmissionForm').reset();
+            
+            // Hide alert after 5 seconds
+            setTimeout(() => {
+                alert.classList.add('hidden');
+            }, 5000);
+        });
+
+        // AI Assistant functionality
+        const aiModal = document.getElementById('aiModal');
+        const aiAssistBtn = document.getElementById('aiAssistBtn');
+        const closeBtn = document.querySelector('.close');
+        const generateAIBtn = document.getElementById('generateAI');
+
+        aiAssistBtn.addEventListener('click', function() {
+            aiModal.classList.remove('hidden');
+        });
+
+        closeBtn.addEventListener('click', function() {
+            aiModal.classList.add('hidden');
+        });
+
+        generateAIBtn.addEventListener('click', function() {
+            const prompt = document.getElementById('aiPrompt').value;
+            const aiResult = document.getElementById('aiResult');
+            
+            if (!prompt) {
+                alert('Please enter a prompt for the AI assistant.');
+                return;
+            }
+
+            // Simulate AI content generation
+            aiResult.innerHTML = '<div class="loading">Generating content...</div>';
+            aiResult.classList.remove('hidden');
+            
+            setTimeout(() => {
+                const generatedContent = generateAIContent(prompt);
+                aiResult.innerHTML = `
+                    <h4>Generated Content:</h4>
+                    <div class="ai-content">${generatedContent}</div>
+                    <button id="useAIContent" class="btn" style="margin-top: 10px;">Use This Content</button>
+                `;
+                
+                document.getElementById('useAIContent').addEventListener('click', function() {
+                    const currentContent = document.getElementById('blogContent').value;
+                    const newContent = currentContent ? currentContent + '\n\n' + generatedContent : generatedContent;
+                    document.getElementById('blogContent').value = newContent;
+                    aiModal.classList.add('hidden');
+                });
+            }, 2000);
+        });
+
+        // Simple AI content generator (simulation)
+        function generateAIContent(prompt) {
+            const templates = {
+                introduction: "Welcome to this comprehensive guide! In today's digital landscape, understanding these concepts is crucial for anyone looking to expand their knowledge. Let's dive into the fascinating world of technology and innovation.",
+                conclusion: "In conclusion, the insights shared in this post highlight the importance of continuous learning and adaptation. As we move forward, embracing new technologies and methodologies will be key to success.",
+                tutorial: "Step-by-step guide:\n1. Begin by understanding the fundamentals\n2. Practice with real-world examples\n3. Implement best practices\n4. Test and iterate\n5. Share your knowledge with others",
+                tips: "Here are some valuable tips to keep in mind:\n• Stay updated with the latest trends\n• Practice regularly to improve your skills\n• Connect with like-minded professionals\n• Don't be afraid to experiment and learn from mistakes"
+            };
+            
+            const lowerPrompt = prompt.toLowerCase();
+            if (lowerPrompt.includes('introduction') || lowerPrompt.includes('intro')) {
+                return templates.introduction;
+            } else if (lowerPrompt.includes('conclusion') || lowerPrompt.includes('ending')) {
+                return templates.conclusion;
+            } else if (lowerPrompt.includes('tutorial') || lowerPrompt.includes('guide')) {
+                return templates.tutorial;
+            } else if (lowerPrompt.includes('tips') || lowerPrompt.includes('advice')) {
+                return templates.tips;
+            } else {
+                return `Based on your prompt about "${prompt}", here's some generated content that might help:\n\nThis topic is particularly interesting because it touches on several important aspects of modern technology and communication. Understanding these concepts can significantly enhance your knowledge and practical skills.\n\nRemember to always consider your audience when writing and provide valuable, actionable insights that readers can apply in their own projects or daily lives.`;
+            }
+        }
+
+        // Close modal when clicking outside
+        window.addEventListener('click', function(e) {
+            if (e.target === aiModal) {
+                aiModal.classList.add('hidden');
+            }
+        });
+    </script>
+</body>
+</html>

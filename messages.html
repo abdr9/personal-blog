@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Messages - ABD BLOGS</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header class="header">
+        <nav class="nav">
+            <div class="logo">
+                <h1>ABD BLOGS</h1>
+            </div>
+            <ul class="nav-links">
+                <li><a href="index.html">Home</a></li>
+                <li><a href="about.html">About</a></li>
+                <li><a href="contact.html">Contact</a></li>
+                <li><a href="submit-blog.html">Submit Blog</a></li>
+                <li><a href="messages.html">Messages</a></li>
+                <li><a href="admin.html">Admin</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main class="main">
+        <section class="messages-container">
+            <h2>Community Messages</h2>
+            <p>Connect with fellow readers and writers in our community message board!</p>
+            
+            <!-- Message Form -->
+            <div class="form-container">
+                <h3>Post a Message</h3>
+                <form id="messageForm">
+                    <div class="form-group">
+                        <label for="messageName">Your Name:</label>
+                        <input type="text" id="messageName" name="messageName" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="messageEmail">Your Email (optional):</label>
+                        <input type="email" id="messageEmail" name="messageEmail">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="messageContent">Your Message:</label>
+                        <textarea id="messageContent" name="messageContent" rows="4" required placeholder="Share your thoughts, ask questions, or engage with the community..."></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <button type="button" id="aiSuggestionBtn" class="btn" style="background-color: #9b59b6; margin-right: 10px;">
+                            🤖 Get AI Message Suggestions
+                        </button>
+                        <button type="submit" class="btn">Post Message</button>
+                    </div>
+                </form>
+                
+                <div id="messageAlert" class="alert hidden"></div>
+            </div>
+            
+            <!-- Messages Display -->
+            <div class="messages-display">
+                <h3>Recent Messages</h3>
+                <div id="messagesContainer">
+                    <!-- Messages will be loaded here -->
+                </div>
+            </div>
+        </section>
+
+        <!-- AI Suggestion Modal -->
+        <div id="aiSuggestionModal" class="modal hidden">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <h3>AI Message Suggestions</h3>
+                <p>Get suggestions for engaging community messages!</p>
+                <div class="suggestion-buttons">
+                    <button class="suggestion-btn" data-type="question">Ask a Question</button>
+                    <button class="suggestion-btn" data-type="appreciation">Show Appreciation</button>
+                    <button class="suggestion-btn" data-type="discussion">Start Discussion</button>
+                    <button class="suggestion-btn" data-type="feedback">Give Feedback</button>
+                </div>
+                <div id="aiSuggestionResult" class="ai-result hidden"></div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <p>&copy; 2025 ABD BLOGS. All rights reserved.</p>
+    </footer>
+    
+    <script>
+        // Load messages on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            loadMessages();
+        });
+
+        // Message form submission
+        document.getElementById('messageForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const name = document.getElementById('messageName').value;
+            const email = document.getElementById('messageEmail').value;
+            const content = document.getElementById('messageContent').value;
+            
+            const newMessage = {
+                id: Date.now(),
+                name: name,
+                email: email,
+                content: content,
+                date: new Date().toISOString(),
+                replies: []
+            };
+            
+            // Get existing messages
+            const messages = JSON.parse(localStorage.getItem('communityMessages')) || [];
+            messages.unshift(newMessage);
+            localStorage.setItem('communityMessages', JSON.stringify(messages));
+            
+            const alert = document.getElementById('messageAlert');
+            alert.className = 'alert alert-success';
+            alert.textContent = 'Your message has been posted successfully!';
+            alert.classList.remove('hidden');
+            
+            // Reset form
+            document.getElementById('messageForm').reset();
+            
+            // Reload messages
+            loadMessages();
+            
+            // Hide alert after 3 seconds
+            setTimeout(() => {
+                alert.classList.add('hidden');
+            }, 3000);
+        });
+
+        // Load and display messages
+        function loadMessages() {
+            const messagesContainer = document.getElementById('messagesContainer');
+            const messages = JSON.parse(localStorage.getItem('communityMessages')) || [];
+            
+            if (messages.length === 0) {
+                messagesContainer.innerHTML = '<p class="no-messages">No messages yet. Be the first to post!</p>';
+                return;
+            }
+            
+            messagesContainer.innerHTML = '';
+            
+            messages.forEach(message => {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = 'message-item';
+                messageDiv.innerHTML = `
+                    <div class="message-header">
+                        <strong>${message.name}</strong>
+                        <span class="message-date">${formatDate(message.date)}</span>
+                    </div>
+                    <div class="message-content">${message.content}</div>
+                    <div class="message-actions">
+                        <button class="reply-btn" onclick="toggleReply(${message.id})">Reply</button>
+                        <button class="like-btn" onclick="likeMessage(${message.id})">
+                            👍 <span id="likes-${message.id}">${message.likes || 0}</span>
+                        </button>
+                    </div>
+                    <div id="reply-form-${message.id}" class="reply-form hidden">
+                        <textarea id="reply-content-${message.id}" placeholder="Write your reply..." rows="2"></textarea>
+                        <button onclick="submitReply(${message.id})">Post Reply</button>
+                    </div>
+                    <div class="replies" id="replies-${message.id}">
+                        ${message.replies ? message.replies.map(reply => `
+                            <div class="reply-item">
+                                <strong>${reply.name}</strong>: ${reply.content}
+                                <span class="reply-date">${formatDate(reply.date)}</span>
+                            </div>
+                        `).join('') : ''}
+                    </div>
+                `;
+                messagesContainer.appendChild(messageDiv);
+            });
+        }
+
+        // Format date
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+        }
+
+        // Toggle reply form
+        function toggleReply(messageId) {
+            const replyForm = document.getElementById(`reply-form-${messageId}`);
+            replyForm.classList.toggle('hidden');
+        }
+
+        // Submit reply
+        function submitReply(messageId) {
+            const replyContent = document.getElementById(`reply-content-${messageId}`).value;
+            if (!replyContent.trim()) {
+                alert('Please enter a reply.');
+                return;
+            }
+            
+            const messages = JSON.parse(localStorage.getItem('communityMessages')) || [];
+            const messageIndex = messages.findIndex(msg => msg.id === messageId);
+            
+            if (messageIndex !== -1) {
+                if (!messages[messageIndex].replies) {
+                    messages[messageIndex].replies = [];
+                }
+                
+                messages[messageIndex].replies.push({
+                    name: 'Anonymous',
+                    content: replyContent,
+                    date: new Date().toISOString()
+                });
+                
+                localStorage.setItem('communityMessages', JSON.stringify(messages));
+                loadMessages();
+            }
+        }
+
+        // Like message
+        function likeMessage(messageId) {
+            const messages = JSON.parse(localStorage.getItem('communityMessages')) || [];
+            const messageIndex = messages.findIndex(msg => msg.id === messageId);
+            
+            if (messageIndex !== -1) {
+                messages[messageIndex].likes = (messages[messageIndex].likes || 0) + 1;
+                localStorage.setItem('communityMessages', JSON.stringify(messages));
+                document.getElementById(`likes-${messageId}`).textContent = messages[messageIndex].likes;
+            }
+        }
+
+        // AI Suggestion functionality
+        const aiSuggestionModal = document.getElementById('aiSuggestionModal');
+        const aiSuggestionBtn = document.getElementById('aiSuggestionBtn');
+        const closeBtns = document.querySelectorAll('.close');
+
+        aiSuggestionBtn.addEventListener('click', function() {
+            aiSuggestionModal.classList.remove('hidden');
+        });
+
+        closeBtns.forEach(btn => {
+            btn.addEventListener('click', function() {
+                aiSuggestionModal.classList.add('hidden');
+            });
+        });
+
+        // Suggestion buttons
+        document.querySelectorAll('.suggestion-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const type = this.dataset.type;
+                const aiResult = document.getElementById('aiSuggestionResult');
+                
+                const suggestion = getAISuggestion(type);
+                aiResult.innerHTML = `
+                    <h4>Suggested Message:</h4>
+                    <div class="ai-content">${suggestion}</div>
+                    <button id="useSuggestion" class="btn" style="margin-top: 10px;">Use This Suggestion</button>
+                `;
+                aiResult.classList.remove('hidden');
+                
+                document.getElementById('useSuggestion').addEventListener('click', function() {
+                    document.getElementById('messageContent').value = suggestion;
+                    aiSuggestionModal.classList.add('hidden');
+                });
+            });
+        });
+
+        // AI suggestion generator
+        function getAISuggestion(type) {
+            const suggestions = {
+                question: "I've been reading the recent posts and I'm curious about [topic]. Has anyone had experience with this? I'd love to hear your thoughts and any tips you might have!",
+                appreciation: "I just wanted to say thank you for all the amazing content on this blog! The insights shared here have really helped me in my journey. Keep up the great work!",
+                discussion: "I've been thinking about [topic] lately and would love to start a discussion about it. What are your thoughts on this? How do you approach this in your own experience?",
+                feedback: "I really enjoyed the recent post about [topic]. The way it was explained made it very clear and actionable. I'd love to see more content like this in the future!"
+            };
+            
+            return suggestions[type] || "Thanks for this great community! I'm looking forward to engaging with everyone here.";
+        }
+
+        // Close modal when clicking outside
+        window.addEventListener('click', function(e) {
+            if (e.target === aiSuggestionModal) {
+                aiSuggestionModal.classList.add('hidden');
+            }
+        });
+    </script>
+</body>
+</html>
