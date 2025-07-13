@@ -17,11 +17,6 @@ A fully functional blog website built with HTML, CSS, and JavaScript. Features i
 - **Contact**: Contact form for visitors
 - **Admin**: Admin panel for managing posts
 
-## Admin Access
-
-- **Username**: admin
-- **Password**: admin
-
 ## How to Use
 
 1. Open `index.html` in your web browser
